@@ -1,0 +1,117 @@
+// read all message types
+message Message {
+  optional uint32 message_uint32 = 42;
+}
+
+message Types {
+  // int32, int64, uint32, uint64, sint32, sint64, bool, enum
+  optional int32 t_int32 = 1;
+  optional int64 t_int64 = 2;
+  optional uint32 t_uint32 = 3;
+  optional uint64 t_uint64 = 4;
+  optional sint32 t_sint32 = 5;
+  optional sint64 t_sint64 = 6;
+  optional bool t_bool = 7;
+  
+  enum Choices {
+    c1 = 0;
+    c2 = 2;
+    c3 = -5;
+  }
+  optional Choices t_enum = 8;
+
+  optional fixed32 t_fixed32 = 9;
+  optional sfixed32 t_sfixed32 = 10;
+  optional fixed64 t_fixed64 = 11;
+  optional sfixed64 t_sfixed64 = 12;
+  optional float  t_float = 13;
+  optional double t_double = 14;
+  optional string t_string = 15;
+  optional bytes t_bytes = 16;
+  
+  repeated uint32 t_repeated_uint32 = 17;
+  repeated string t_repeated_string = 18;
+  
+  message SubMessage {
+    optional uint32 t_submessage_uint32 = 42;
+  }
+  optional SubMessage t_submessage = 19;
+  
+  repeated uint32 t_packed_uint32 = 20 [packed=true];
+}
+
+
+message BenchmarkUINT32 {
+  optional uint32 f1 = 1;
+  optional uint32 f2 = 2;
+  optional uint32 f3 = 5;
+  optional uint32 f4 = 6;
+  optional uint32 f5 = 8;
+  optional uint32 f6 = 10;
+  optional uint32 f7 = 17;
+  optional uint32 f8 = 21;
+  optional uint32 f9 = 26;
+  optional uint32 f10 = 40;
+}
+
+message BenchmarkString {
+  optional string f1 = 1;
+  optional string f2 = 2;
+  optional string f3 = 5;
+  optional string f4 = 6;
+  optional string f5 = 8;
+  optional string f6 = 10;
+  optional string f7 = 17;
+  optional string f8 = 21;
+  optional string f9 = 26;
+  optional string f10 = 40;
+}
+
+message BenchmarkFixed32 {
+  optional fixed32 f1 = 1;
+  optional fixed32 f2 = 2;
+  optional fixed32 f3 = 5;
+  optional fixed32 f4 = 6;
+  optional fixed32 f5 = 8;
+  optional fixed32 f6 = 10;
+  optional fixed32 f7 = 17;
+  optional fixed32 f8 = 21;
+  optional fixed32 f9 = 26;
+  optional fixed32 f10 = 40;
+}
+
+message BenchmarkFixed64 {
+  optional fixed64 f1 = 1;
+  optional fixed64 f2 = 2;
+  optional fixed64 f3 = 5;
+  optional fixed64 f4 = 6;
+  optional fixed64 f5 = 8;
+  optional fixed64 f6 = 10;
+  optional fixed64 f7 = 17;
+  optional fixed64 f8 = 21;
+  optional fixed64 f9 = 26;
+  optional fixed64 f10 = 40;
+}
+
+message RequiredField2 {
+  optional uint32 f1 = 1;
+  required uint32 f2 = 2;
+}
+
+message StringField {
+  optional string f1 = 1;
+}
+
+
+message PackedField {
+  repeated uint32 f1 = 1 [packed=true];
+}
+
+message MergeTest {
+  message SubMessage {
+    optional uint32 f1 = 1;
+    optional uint32 f2 = 2;
+  }
+  optional SubMessage submsg = 5;
+}
+
