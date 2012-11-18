@@ -57,7 +57,7 @@ if (ret == -2) {
 ## Benchmark
 
 Tested on:
-CentOS 6.3 x86-64, 
+CentOS 6.3 x86-64, Intel(R) Xeon(R) CPU E5620 @ 2.40GHz 
 
 Competitors:
 * 1. protobuf-c with default malloc allocator
@@ -76,8 +76,11 @@ Result in millions of unpacking per second. Higher is better.
 
 | test    | 1. c, malloc | 2. c, linear | 3. c++, google | 4. iter-unpack |
 |:--------|-------------:|-------------:|---------------:|---------------:|
-| uint32  | This         |        This |     This     |
-| fixed32 | column       |      column |    column    |
-| fixed64 | will       |        will |     will     |
-| string  | be         |          be |      be      |
-| openx   | left       |       right |    center    |
+| uint32  |     2.16 m/s |     2.48 m/s |       6.87 m/s |       7.72 m/s |
+| fixed32 |     2.80 m/s |     3.37 m/s |      12.78 m/s |      13.02 m/s |
+| fixed64 |     2.55 m/s |     3.26 m/s |      12.70 m/s |      11.30 m/s |
+| string  |     0.98 m/s |     1.64 m/s |       0.89 m/s |       7.01 m/s |
+| openx   |     0.19 m/s |     0.37 m/s |       0.27 m/s |       2.34 m/s |
+
+
+
