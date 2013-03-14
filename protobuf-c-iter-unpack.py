@@ -24,7 +24,7 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 """
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 import inspect
 import copy
@@ -818,6 +818,7 @@ class Module(object):
       r += message.readers()
     # hack for force add read_uint32
     r.append(_uint32(None).reader())
+    r.append(_int32(None).reader())
     return "\n".join(sorted(list(set(r))))
   
   def unpackers(self):
