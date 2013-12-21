@@ -107,6 +107,10 @@ static inline const uint8_t* memory_allocate_copy(const size_t size,
                     uint8_t** memory, const uint8_t* memory_end,
                     const uint8_t* src, const size_t src_size) {
   if (memory_end < *memory + size) return NULL;
+  if (*memory==src+src_size) { // resize if src is last allocated block
+    *memory += size-src_size;
+    return src;
+  }
   memcpy(*memory, src, src_size);
   *memory += size;
   return *memory - size;
