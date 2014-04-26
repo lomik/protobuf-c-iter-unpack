@@ -106,6 +106,7 @@ static inline const uint8_t* memory_allocate(const size_t size,
 static inline const uint8_t* memory_allocate_copy(const size_t size,
                     uint8_t** memory, const uint8_t* memory_end,
                     const uint8_t* src, const size_t src_size) {
+  if (size < src_size) return NULL;
   if (memory_end < *memory + size) return NULL;
   if (*memory==src+src_size) { // resize if src is last allocated block
     *memory += size-src_size;
@@ -115,8 +116,6 @@ static inline const uint8_t* memory_allocate_copy(const size_t size,
   *memory += size;
   return *memory - size;
 }
-
-static int s_endianness = 1;
 
 ${readers}
 
@@ -502,9 +501,14 @@ class _fixed32(_base):
   
   def reader(self):
     return self.render("""
+      #ifndef DECLARED_S_ENDIANLESS
+      #define DECLARED_S_ENDIANLESS 1
+      static const int s_endianness = 1;
+      #endif
+      
       static inline const uint8_t* ${read_function}(void* v, const uint8_t* buffer, const uint8_t* buffer_end) {
         if (buffer+4 > buffer_end) return NULL;
-        if ((*(char*)&(s_endianness)==1)) { // runtime little-endian test 
+        if (1==*(char*)&(s_endianness)) { // runtime little-endian test 
           *(uint32_t*)v = *(uint32_t*)buffer;
         } else {
           *(uint32_t*)v = ((uint32_t)buffer[0]) | (((uint32_t)buffer[1]) << 8) \
@@ -531,9 +535,14 @@ class _fixed64(_base):
 
   def reader(self):
     return self.render("""
+      #ifndef DECLARED_S_ENDIANLESS
+      #define DECLARED_S_ENDIANLESS 1
+      static const int s_endianness = 1;
+      #endif
+      
       static inline const uint8_t* ${read_function}(void* v, const uint8_t* buffer, const uint8_t* buffer_end) {
         if (buffer+8 > buffer_end) return NULL;
-        if ((*(char*)&(s_endianness)==1)) { // runtime little-endian test
+        if (1==*(char*)&(s_endianness)) { // runtime little-endian test
           //memcpy((uint8_t*)v, buffer, 8);
           *(uint64_t*)v = *(uint64_t*)buffer;
           //*(uint32_t*)v = *(uint32_t*)buffer;
@@ -572,12 +581,12 @@ class _string(_base):
   def read(self):
     return self.render("""
       ${repeated_check_resize}
-      if ((buffer=read_int32(&t, buffer, buffer_end)) == NULL) ERROR_UNPACK;
-      if (buffer + t > buffer_end) ERROR_UNPACK;
-      if ((${read_to_field} = (char*)memory_allocate_copy(t+1,
-          &memory, memory_end, buffer, t))==NULL) ERROR_MEMORY;
+      if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) ERROR_UNPACK;
+      if (buffer + length > buffer_end) ERROR_UNPACK;
+      if ((${read_to_field} = (char*)memory_allocate_copy(length+1,
+          &memory, memory_end, buffer, length))==NULL) ERROR_MEMORY;
       *(memory-1) = 0;
-      buffer += t;
+      buffer += length;
       ${repeated_increment_count}
     """)
 
@@ -612,22 +621,22 @@ class _submessage(_base):
   def read(self):
     ret = """
         ${repeated_check_resize}
-        if ((buffer=read_int32(&t, buffer, buffer_end)) == NULL) ERROR_UNPACK;
-        if (buffer + t > buffer_end) ERROR_UNPACK;
-        buffer += t;
+        if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) ERROR_UNPACK;
+        if (buffer + length > buffer_end) ERROR_UNPACK;
+        buffer += length;
     """
     if self.is_repeated():
       ret+="""
         ${read_to_field} = (${submessage_type}*)memory;
-        t = ${submessage_unpack}(buffer-t, t, memory, memory_end-memory);
+        t = ${submessage_unpack}(buffer-length, length, memory, memory_end-memory);
       """
     else: # merge support
       ret+="""
         if (${read_to_field} == NULL) {
           ${read_to_field} = (${submessage_type}*)memory;
-          t = ${submessage_unpack}(buffer-t, t, memory, memory_end-memory);
+          t = ${submessage_unpack}(buffer-length, length, memory, memory_end-memory);
         } else {
-          t = ${submessage_merge}(${read_to_field}, buffer-t, t, memory, memory_end-memory);
+          t = ${submessage_merge}(${read_to_field}, buffer-length, length, memory, memory_end-memory);
         }
       """
     
@@ -724,8 +733,10 @@ class Message(object):
     out = []
     if self.is_has_packed_fields():
       out.append("const uint8_t* tmp_buffer_pointer = NULL;")
-    if self.is_has_packed_fields() or self.is_has_field_type(('string','submessage')):
+    if self.is_has_packed_fields() or self.is_has_field_type(('submessage',)):
       out.append("int32_t t = 0;")
+    if self.is_has_field_type(('string','submessage')):
+      out.append("uint32_t length = 0;")
     return self.render("\n".join(out))
   
   def header(self):

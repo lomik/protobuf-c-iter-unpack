@@ -303,7 +303,11 @@ int test_validation() {
   StringField* c_string = string_field__unpack(NULL, sizeof(ZERO_BYTE_STRING), ZERO_BYTE_STRING);
   StringField* f_string = (StringField*)iter_msg_buffer;
   unpack_result = string_field__iter_unpack(ZERO_BYTE_STRING,  sizeof(ZERO_BYTE_STRING),  iter_msg_buffer, sizeof(iter_msg_buffer));
-  testTrue((f_string->f1 != NULL) && (strcmp(c_string->f1,f_string->f1)==0),"don't validate string");   
+  testTrue((f_string->f1 != NULL) && (strcmp(c_string->f1,f_string->f1)==0),"don't validate string");
+
+  unpack_result = types__iter_unpack(NEGATIVE_LENGTH_STRING,  sizeof(NEGATIVE_LENGTH_STRING),  iter_msg_buffer, sizeof(iter_msg_buffer));
+  
+  testTrue(unpack_result == PROTOBUF_ITER_WRONG_MESSAGE, "string length overflow");
   
   return 1;
 }
