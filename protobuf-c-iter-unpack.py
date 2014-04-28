@@ -24,7 +24,7 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 """
 
-VERSION = "1.2"
+VERSION = "1.3"
 
 import inspect
 import copy
@@ -690,8 +690,8 @@ class Message(object):
   def generate_tree(self):
     tree = {}
     for i, field_info in enumerate(self.fields):
-      f = tree
       for tag, read_source in field_info.cases():
+        f = tree
         for b in tag[:-1]:
           if not b in f:
             f[b] = {}
