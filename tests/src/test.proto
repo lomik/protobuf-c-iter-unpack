@@ -38,6 +38,8 @@ message Types {
   optional SubMessage t_submessage = 19;
   
   repeated uint32 t_packed_uint32 = 20 [packed=true];
+
+  repeated bytes t_repeated_bytes = 21;
 }
 
 

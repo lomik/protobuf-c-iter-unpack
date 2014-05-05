@@ -24,7 +24,7 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 """
 
-VERSION = "1.3"
+VERSION = "1.4"
 
 import inspect
 import copy
@@ -656,7 +656,7 @@ class _bytes(_base):
 
   def read_to_field(self):
     if self.is_repeated():
-      return "*(object->${name}+object->n_${name})"
+      return "(*(object->${name}+object->n_${name}))"
     else:
       return "object->${name}"
 
