@@ -121,8 +121,8 @@ ${readers}
 
 static inline const uint8_t* skip_varint(const uint8_t* buffer, const uint8_t* buffer_end) {
   while (1) {
-    if ((*buffer++)>>7==0) break;
     if (buffer >= buffer_end) return NULL;
+    if ((*buffer++)>>7==0) break;
   }
   return buffer;
 }
