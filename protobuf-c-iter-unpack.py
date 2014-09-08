@@ -24,7 +24,7 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 """
 
-VERSION = "1.5.1"
+VERSION = "1.5.2"
 
 import inspect
 import copy
@@ -736,7 +736,7 @@ class Message(object):
       out.append("const uint8_t* tmp_buffer_pointer = NULL;")
     if self.is_has_packed_fields() or self.is_has_field_type(('submessage',)):
       out.append("int32_t t = 0;")
-    if self.is_has_field_type(('string','submessage')):
+    if self.is_has_field_type(('string','submessage', 'bytes')):
       out.append("uint32_t length = 0;")
     return self.render("\n".join(out))
 
