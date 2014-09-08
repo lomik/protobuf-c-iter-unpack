@@ -10,7 +10,7 @@ are met:
 2. Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
- 
+
 THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -24,7 +24,7 @@ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 """
 
-VERSION = "1.5"
+VERSION = "1.5.1"
 
 import inspect
 import copy
@@ -45,7 +45,7 @@ int ${message_type}__iter_unpack_merge(${MessageType}* object, const uint8_t* bu
   const uint8_t* buffer_end = buffer+buffer_size;
   const uint8_t* memory_end = memory+memory_size;
   ${additionally_variables}
-  
+
   while (buffer < buffer_end) {
     ${switch_tree}
   }
@@ -55,7 +55,7 @@ int ${message_type}__iter_unpack_merge(${MessageType}* object, const uint8_t* bu
 int ${message_type}__iter_unpack(const uint8_t* buffer, size_t buffer_size, uint8_t* memory, size_t memory_size) {
   const uint8_t* memory_end = memory+memory_size;
   ${MessageType} * object;
-  
+
   if ( (object = (${MessageType}*)memory_allocate_copy(sizeof(${MessageType}),
                     &memory, memory_end,
                     (uint8_t*)&${MessageType}__empty, sizeof(${MessageType}))) == NULL) ERROR_MEMORY;
@@ -218,33 +218,33 @@ def render_value(key, data):
     key = key[:p]
   else:
     subkey = None
-  
+
   found = False
   value = None
-  
+
   if not found:
     try:
       value = data[key]
       found = True
     except (KeyError,TypeError):
       pass
-  
+
   if not found:
     try:
       value = data[int(key)]
       found = True
     except (KeyError,ValueError,IndexError):
       pass
-  
+
   if not found:
     value = getattr(data, key, None)
     if not value is None:
       found = True
-  
+
   if found:
     if callable(value):
       value = value()
-  
+
   if not found:
     raise ValueError("key %s not found in %s" % (str(key), str(data)))
 
@@ -289,7 +289,7 @@ def render(template,data):
       res.append("")
       continue
     res.append(l[min_intendation:])
-    
+
   # skip empty lines on start
   while res and not res[0].split():
     res = res[1:]
@@ -331,7 +331,7 @@ class _base(object):
   (types which use the varint, 32-bit, or 64-bit wire types) can be declared "packed".
   """
   repeated_init_size = 4
-  
+
   def __init__(self, protobuf_field):
     self._field = protobuf_field
 
@@ -339,16 +339,16 @@ class _base(object):
     if isinstance(data, (list,)):
       return render("\n".join([s for s in data if s]),self)
     return render(data, self)
-  
+
   def is_optional(self):
     return bool(LABEL_TO_NAME_MAP[self._field.label] == 'optional')
-  
+
   def is_repeated(self):
     return bool(LABEL_TO_NAME_MAP[self._field.label] == 'repeated')
-  
+
   def is_required(self):
     return bool(LABEL_TO_NAME_MAP[self._field.label] == 'required')
-  
+
   def _tag(self, wire_type):
     b = []
     v = (self._field.number << 3) + wire_type
@@ -361,16 +361,16 @@ class _base(object):
         b.append(t)
         break
     return b
-  
+
   def tag(self):
     return self._tag(self.wire_type)
 
   def tag_packed(self):
     return self._tag(2)
-  
+
   def is_packed(self):
     return self.is_repeated() and self.wire_type in (0,1,5)
-  
+
   def cases(self):
     if self.is_packed():
       return [
@@ -380,10 +380,10 @@ class _base(object):
     return [
         (self.tag(), self.read()),
     ]
-  
+
   def name(self):
     return self._field.name.lower()
-  
+
   def repeated_check_resize(self):
     if not self.is_repeated():
       return ""
@@ -396,20 +396,20 @@ class _base(object):
         }
       }
     """)
-  
+
   def repeated_increment_count(self):
     if not self.is_repeated():
       return ""
     return "object->n_${name}++;"
-  
+
   def has_value_set_true(self):
     if self.is_optional():
       return "object->has_${name} = 1;"
     return ""
-  
+
   def read_function(self):
     return "read_${type_name}"
-  
+
   def read(self):
     if self.is_repeated():
       return self.render("""
@@ -421,7 +421,7 @@ class _base(object):
       if ((buffer=${read_function}(&(object->${name}), buffer, buffer_end))==NULL) ERROR_UNPACK;
       ${has_value_set_true}
     """)
-  
+
   def read_packed(self):
     return self.render("""
       if ((buffer=read_int32(&t, buffer, buffer_end)) == NULL) ERROR_UNPACK;
@@ -432,13 +432,13 @@ class _base(object):
       }
       if (buffer > tmp_buffer_pointer) ERROR_UNPACK;
     """)
-  
+
 class _varint(_base):
   wire_type = 0
   c_type = "uint64_t"
   tmp_type = "uint64_t"
   tmp_cast = "tmp"
-  
+
   def reader(self):
     return self.render("""
       static inline const uint8_t* ${read_function}(void* v, const uint8_t* buffer, const uint8_t* buffer_end) {
@@ -498,17 +498,17 @@ class _enum(_varint):
 class _fixed32(_base):
   wire_type = 5
   c_type = "uint32_t"
-  
+
   def reader(self):
     return self.render("""
       #ifndef DECLARED_S_ENDIANLESS
       #define DECLARED_S_ENDIANLESS 1
       static const int s_endianness = 1;
       #endif
-      
+
       static inline const uint8_t* ${read_function}(void* v, const uint8_t* buffer, const uint8_t* buffer_end) {
         if (buffer+4 > buffer_end) return NULL;
-        if (1==*(char*)&(s_endianness)) { // runtime little-endian test 
+        if (1==*(char*)&(s_endianness)) { // runtime little-endian test
           *(uint32_t*)v = *(uint32_t*)buffer;
         } else {
           *(uint32_t*)v = ((uint32_t)buffer[0]) | (((uint32_t)buffer[1]) << 8) \
@@ -539,7 +539,7 @@ class _fixed64(_base):
       #define DECLARED_S_ENDIANLESS 1
       static const int s_endianness = 1;
       #endif
-      
+
       static inline const uint8_t* ${read_function}(void* v, const uint8_t* buffer, const uint8_t* buffer_end) {
         if (buffer+8 > buffer_end) return NULL;
         if (1==*(char*)&(s_endianness)) { // runtime little-endian test
@@ -599,25 +599,25 @@ class _submessage(_base):
   singular embedded messages are merged, and repeated fields are concatenated.
   """
   wire_type = 2
-  
+
   def submessage_type(self):
     return self._field.message_type.full_name.replace("_","").replace(".","__")
-  
+
   def c_type(self):
     return "%s*" % self.submessage_type()
-  
+
   def submessage_unpack(self):
     return to_underlines(self._field.message_type.full_name).lower().replace(".","__")+"__iter_unpack"
 
   def submessage_merge(self):
     return to_underlines(self._field.message_type.full_name).lower().replace(".","__")+"__iter_unpack_merge"
-  
+
   def read_to_field(self):
     if self.is_repeated():
       return "*(object->${name}+object->n_${name})"
     else:
       return "object->${name}"
-    
+
   def read(self):
     ret = """
         ${repeated_check_resize}
@@ -639,15 +639,15 @@ class _submessage(_base):
           t = ${submessage_merge}(${read_to_field}, buffer-length, length, memory, memory_end-memory);
         }
       """
-    
+
     ret+= """
         if (t < 0) return t;
         else memory += t;
         ${repeated_increment_count}
     """
-    
+
     return self.render(ret)
-      
+
 
 @field
 class _bytes(_base):
@@ -663,7 +663,8 @@ class _bytes(_base):
   def read(self):
     return self.render("""
       ${repeated_check_resize}
-      if ((buffer=read_uint32(&(${read_to_field}.len), buffer, buffer_end)) == NULL) ERROR_UNPACK;
+      if ((buffer=read_uint32(&length, buffer, buffer_end)) == NULL) ERROR_UNPACK;
+      ${read_to_field}.len = (size_t)length;
       if (buffer + ${read_to_field}.len > buffer_end) ERROR_UNPACK;
       if ((${read_to_field}.data = (uint8_t*)memory_allocate_copy(${read_to_field}.len,
           &memory, memory_end, buffer, ${read_to_field}.len))==NULL) ERROR_MEMORY;
@@ -683,10 +684,10 @@ class Message(object):
     self.fields = []
     for num, field in descriptor.fields_by_number.items():
       self.fields.append(get_field(field))
-      
+
   def render(self, msg):
     return render(msg, self)
-    
+
   def generate_tree(self):
     tree = {}
     for i, field_info in enumerate(self.fields):
@@ -700,35 +701,35 @@ class Message(object):
         if not b in f:
           f[b] = read_source
     return tree
-    
+
   def MessageType(self):
     return self.descriptor.full_name.replace("_","").replace(".","__")
-  
+
   def message_type(self):
     return to_underlines(self.descriptor.full_name).lower().replace(".","__")
-  
+
   def MESSAGE_TYPE(self):
     return to_underlines(self.descriptor.full_name).upper().replace(".","__")
-  
-  
+
+
   def is_has_repeated_fields(self):
     for f in self.fields:
       if f.is_repeated():
         return True
     return False
-  
+
   def is_has_packed_fields(self):
     for f in self.fields:
       if f.is_packed():
         return True
     return False
-  
+
   def is_has_field_type(self, types):
     for f in self.fields:
       if f.type_name in types:
         return True
     return False
-  
+
   def additionally_variables(self):
     out = []
     if self.is_has_packed_fields():
@@ -738,13 +739,13 @@ class Message(object):
     if self.is_has_field_type(('string','submessage')):
       out.append("uint32_t length = 0;")
     return self.render("\n".join(out))
-  
+
   def header(self):
     return self.render(TYPE_HEADER_TEMPLATE)
-  
+
   def source(self):
     return self.render(MESSAGE_SOURCE_TEMPLATE)
-  
+
   def readers(self):
     r = []
     for f in self.fields:
@@ -753,7 +754,7 @@ class Message(object):
       except AttributeError:
         pass
     return r
-  
+
   def switch_tree(self, data=None, level=0):
     t = [
       "if (buffer + ${level} >= buffer_end) ERROR_UNPACK;" if level > 0 else "",
@@ -764,12 +765,12 @@ class Message(object):
       "    continue;",
       "}",
     ]
-    
+
     t = "\n".join([s for s in t if s])
-    
+
     if data is None:
       data = self.generate_tree()
-    
+
     cases = []
     for byte, subdata in data.items():
       c = "\n".join([s for s in [
@@ -784,11 +785,11 @@ class Message(object):
       else:
         c_data['body'] = subdata
       cases.append(render(c, c_data))
-    
+
     out = render(t, {'level':level, 'cases': "\n".join(cases)})
     return out
-  
-  
+
+
 class Module(object):
   def __init__(self, module):
     self.messages = []
@@ -799,7 +800,7 @@ class Module(object):
       if not issubclass(v,google_message.Message):
         continue
       self.messages.append(Message(v.DESCRIPTOR))
-      
+
     # nested messages
     i = 0
     while i < len(self.messages):
@@ -808,25 +809,25 @@ class Module(object):
       for message in self.messages[j:i]:
         for submessage in message.descriptor.nested_types:
           self.messages.append(Message(submessage))
-      
+
   def render(self, msg):
     return render(msg, self)
-      
+
   def filename(self):
     return self.module.DESCRIPTOR.name.split(".")[0]
-  
+
   def source_filename(self):
     return self.filename()+".pb-iter.c"
-  
+
   def header_filename(self):
     return self.filename()+".pb-iter.h"
-  
+
   def source(self):
     return self.render(SOURCE)
-  
+
   def header(self):
     return self.render(HEADER)
-  
+
   def readers(self):
     r = []
     for message in self.messages:
@@ -835,13 +836,13 @@ class Module(object):
     r.append(_uint32(None).reader())
     r.append(_int32(None).reader())
     return "\n".join(sorted(list(set(r))))
-  
+
   def unpackers(self):
     out = ""
     for message in self.messages:
       out += message.source()
     return out
-  
+
   def unpack_headers(self):
     out = ""
     for message in self.messages:
@@ -857,13 +858,13 @@ def generate(filename):
   if not PROTO_DIR in sys.path: sys.path.insert(0, PROTO_DIR)
 
   module_imported = __import__(module_name, globals(), locals(), [], -1)
-  
+
   module = Module(module_imported)
 
   f = open(os.path.join(PROTO_DIR,module.source_filename()),"w")
   f.write(module.source())
   f.close()
-  
+
   f = open(os.path.join(PROTO_DIR,module.header_filename()),"w")
   f.write(module.header())
   f.close()
