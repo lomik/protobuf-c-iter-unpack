@@ -340,10 +340,19 @@ int test_validation() {
   return 1;
 }
 
+int test_skip_truncated_varint() {
+  // error expected if varint unfinished
+  int unpack_result = types__iter_unpack(TRUNCATED_VARINT, sizeof(TRUNCATED_VARINT), iter_msg_buffer, sizeof(iter_msg_buffer));
+  testTrue(unpack_result < 0, "error if reading truncated varint");
+
+  return 1;
+}
+
 int main() {
   test_types();
   test_openx();
   test_validation();
+  test_skip_truncated_varint();
 
   return 1;
 }
