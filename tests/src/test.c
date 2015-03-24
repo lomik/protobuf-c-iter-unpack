@@ -348,11 +348,19 @@ int test_skip_truncated_varint() {
   return 1;
 }
 
+int test_unpack_empty_message() {
+  int unpack_result = types__iter_unpack(TRUNCATED_VARINT, 0, iter_msg_buffer, sizeof(iter_msg_buffer));
+  testTrue(unpack_result == sizeof(Types), "unpack empty message");
+
+  return 1;
+}
+
 int main() {
   test_types();
   test_openx();
   test_validation();
   test_skip_truncated_varint();
+  test_unpack_empty_message();
 
   return 1;
 }
